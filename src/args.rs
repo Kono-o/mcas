@@ -1,20 +1,20 @@
-use crate::log;
-
 use crate::args::Args::{One, Two};
-use log::msg;
+use crate::{get, help, log};
+
+use log::*;
 use std::path::PathBuf;
 
-pub enum ParseError {
+pub enum ArgsError {
     InvalidDir,
-    MissingArg1,
-    MissingArg2,
+    InvalidArgs,
+    MissingArgs,
 }
-impl ParseError {
+impl ArgsError {
     pub fn handle(&self) {
         match self {
-            ParseError::InvalidDir => msg("current directory needs higher permissions to access."),
-            ParseError::MissingArg1 => msg("missing function, use mcas help for valid functions."),
-            ParseError::MissingArg2 => msg("missing version, use mcas help for valid format."),
+            ArgsError::InvalidDir => msg("current directory needs higher permissions to access."),
+            ArgsError::MissingArgs => msg("missing arguments, use mcas help for valid arguments."),
+            ArgsError::InvalidArgs => msg("invalid arguments, use mcas help for valid arguments."),
         }
     }
 }
@@ -24,17 +24,39 @@ pub enum Args {
     Two(PathBuf, String, String),
 }
 
-impl Args {
-    pub fn parse() -> Result<Args, ParseError> {
-        return match (
-            std::env::current_dir(),
-            std::env::args().nth(1),
-            std::env::args().nth(2),
-        ) {
-            (Ok(d), Some(f), Some(v)) => Ok(Two(d, f, v)),
-            (Ok(_), Some(f), None) => Ok(One(f)),
-            (Ok(_), None, None) => Err(ParseError::MissingArg1),
-            _ => Err(ParseError::InvalidDir),
-        };
+pub fn parse() -> Result<Args, ArgsError> {
+    return match (
+        std::env::current_dir(),
+        std::env::args().nth(1),
+        std::env::args().nth(2),
+    ) {
+        (Ok(_), Some(f), None) => Ok(One(f)),
+        (Ok(d), Some(f), Some(v)) => Ok(Two(d, f, v)),
+        (Ok(_), None, _) => Err(ArgsError::MissingArgs),
+        _ => Err(ArgsError::InvalidDir),
+    };
+}
+
+pub fn run(args_res: Result<Args, ArgsError>) {
+    match args_res {
+        Err(err) => err.handle(),
+        Ok(args) => match run_args(args) {
+            Ok(_) => return,
+            Err(err) => err.handle(),
+        },
     }
+}
+
+fn run_args(args: Args) -> Result<(), ArgsError> {
+    match args {
+        One(f) => match f.as_str() {
+            "help" => help::help(),
+            _ => return Err(ArgsError::InvalidArgs),
+        },
+        Two(d, f, v) => match f.as_str() {
+            "get" => get::try_get(v.as_str(), &d),
+            _ => return Err(ArgsError::InvalidArgs),
+        },
+    }
+    Ok(())
 }
