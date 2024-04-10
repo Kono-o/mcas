@@ -5,39 +5,29 @@ use std::{fs::File, io::copy};
 const URL: &str = "https://github.com/InventivetalentDev/minecraft-assets/zipball/refs/heads/";
 
 enum McasError {
-    InvalidCurDir,
+    InvalidDir,
     InvalidFunc,
     MissingFunc,
     InvalidVer,
     MissingVer,
 }
 struct Args {
-    cur_dir: PathBuf,
+    dir: PathBuf,
     func: String,
     ver: String,
 }
 impl Args {
     pub fn parse() -> Result<Self, McasError> {
-        let cur_dir: PathBuf;
-        match std::env::current_dir() {
-            Ok(dir) => cur_dir = dir,
-            Err(_) => {
-                return Err(McasError::InvalidCurDir);
-            }
-        }
-
-        let func: String;
-        match std::env::args().nth(1) {
-            Some(f) => func = f,
-            _ => return Err(McasError::MissingFunc),
-        }
-
-        let ver: String;
-        match std::env::args().nth(2) {
-            Some(v) => ver = v,
-            _ => return Err(McasError::MissingVer),
-        }
-        Ok(Self { cur_dir, func, ver })
+        return match (
+            std::env::current_dir(),
+            std::env::args().nth(1),
+            std::env::args().nth(2),
+        ) {
+            (Ok(dir), Some(func), Some(ver)) => Ok(Self { dir, func, ver }),
+            (Ok(_), Some(_), None) => Err(McasError::MissingVer),
+            (Ok(_), None, None) => Err(McasError::InvalidFunc),
+            _ => Err(McasError::InvalidDir),
+        };
     }
 }
 fn main() {
@@ -52,8 +42,4 @@ fn try_download(version: &String, dir: &PathBuf) {
     }
     let mut file = File::create(save_dir).unwrap();
     copy(&mut response, &mut file).unwrap();
-}
-
-fn invalid_msg() {
-    println!("invalid format, try <func> <version>")
 }
