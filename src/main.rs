@@ -1,20 +1,37 @@
-use clap::Parser;
 use indicatif;
+use std::path::PathBuf;
+use std::{fs, fs::File, io::copy};
 
-#[derive(Parser)]
-struct Args {
-    function: String,
-    version: String,
-}
+const URL: &str = "https://github.com/InventivetalentDev/minecraft-assets/zipball/refs/heads/";
+const SAVE_PATH: &str = "/media/kono/HDD/Coding/mcas/zips";
 
 fn main() {
-    let args = Args::parse();
-
-    println!("pattern: {:?}, path: {:?}", args.function, args.version);
-    let pb = indicatif::ProgressBar::new(100);
-    for i in 0..100 {
-        pb.println(format!("[+] finished #{}", i));
-        pb.inc(1);
+    let mut cur_dir: PathBuf;
+    match std::env::current_dir() {
+        Ok(dir) => cur_dir = dir,
+        Err(err) => {
+            println!("{}", err);
+            return;
+        }
     }
-    pb.finish_with_message("done");
+
+    let func = std::env::args().nth(1).expect("no pattern given");
+    let ver = std::env::args().nth(2).expect("no path given");
+    
 }
+fn try_download(version: String) {
+    match fs::create_dir(SAVE_PATH) {
+        Ok(_) => println!("created {}", SAVE_PATH),
+        _ => (),
+    }
+    
+    let url: String = format!("{}{}", URL, version);
+    let file_dir: String = format!("{}{}.zip", SAVE_PATH, version);
+    let mut response = reqwest::blocking::get(url).unwrap();
+    if response.status().as_u16() >= 300 {
+        return;
+    }
+    let mut file = File::create(file_dir).unwrap();
+    copy(&mut response, &mut file)?;
+}
+
