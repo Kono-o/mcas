@@ -1,41 +1,28 @@
+mod args;
+mod log;
+
+use crate::args::Args;
+use concat_string::concat_string;
 use indicatif;
 use std::path::{Path, PathBuf};
 use std::{fs::File, io::copy};
 
 const URL: &str = "https://github.com/InventivetalentDev/minecraft-assets/zipball/refs/heads/";
 
-enum McasError {
-    InvalidDir,
-    InvalidFunc,
-    MissingFunc,
-    InvalidVer,
-    MissingVer,
-}
-struct Args {
-    dir: PathBuf,
-    func: String,
-    ver: String,
-}
-impl Args {
-    pub fn parse() -> Result<Self, McasError> {
-        return match (
-            std::env::current_dir(),
-            std::env::args().nth(1),
-            std::env::args().nth(2),
-        ) {
-            (Ok(dir), Some(func), Some(ver)) => Ok(Self { dir, func, ver }),
-            (Ok(_), Some(_), None) => Err(McasError::MissingVer),
-            (Ok(_), None, None) => Err(McasError::InvalidFunc),
-            _ => Err(McasError::InvalidDir),
-        };
+fn main() {
+    let args_result = Args::parse();
+    match args_result {
+        Err(err) => err.handle(),
+        Ok(a) => match a {
+            Args::Two(..) => println!("2"),
+            Args::One(..) => println!("1"),
+        },
     }
 }
-fn main() {
-    let args = Args::parse();
-}
-fn try_download(version: &String, dir: &PathBuf) {
+
+fn try_download(version: &str, dir: &PathBuf) {
     let url: String = format!("{}{}", URL, version);
-    let save_dir: PathBuf = dir.join(Path::new(format!("{}.zip", version)));
+    let save_dir: PathBuf = dir.join(Path::new(&concat_string!("{}.zip", version)));
     let mut response = reqwest::blocking::get(url).unwrap();
     if response.status().as_u16() >= 300 {
         return;
