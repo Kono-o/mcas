@@ -4,10 +4,11 @@ mod get;
 mod help;
 
 mod args;
-mod log;
+pub mod log;
 
 use crate::args::{parse, run};
 
-fn main() {
-    run(parse());
+#[tokio::main]
+async fn main() {
+    run(parse()).await;
 }

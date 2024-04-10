@@ -1,18 +1,27 @@
+use anyhow::Result;
 use concat_string::concat_string;
-use std::fs::File;
-use std::io::copy;
+use futures::StreamExt;
+use indicatif::ProgressBar;
 use std::path::{Path, PathBuf};
+
+use crate::log;
 
 const URL: &str = "https://github.com/InventivetalentDev/minecraft-assets/zipball/refs/heads/";
 
-pub fn try_get(version: &str, dir: &PathBuf) {
+pub async fn try_get(version: &str, dir: &PathBuf) -> Result<()> {
+    log::msg(&concat_string!("fetching [", version, "]..."));
+
     let url: String = format!("{}{}", URL, version);
     let save_dir: PathBuf = dir.join(Path::new(&concat_string!(version, ".zip")));
-    println!("{:?}", save_dir);
-    let mut response = reqwest::blocking::get(url).unwrap();
-    if response.status().as_u16() >= 300 {
-        return;
+    let bar = ProgressBar::new(32000);
+
+    let mut file = tokio::fs::File::create(save_dir).await?;
+    let mut byte_stream = reqwest::get(&url).await?.bytes_stream();
+
+    while let Some(item) = byte_stream.next().await {
+        bar.inc(1);
+        tokio::io::copy(&mut item?.as_ref(), &mut file).await?;
     }
-    let mut file = File::create(save_dir).unwrap();
-    copy(&mut response, &mut file).unwrap();
+    bar.finish_and_clear();
+    Ok(())
 }

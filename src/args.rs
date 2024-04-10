@@ -37,24 +37,27 @@ pub fn parse() -> Result<Args, ArgsError> {
     };
 }
 
-pub fn run(args_res: Result<Args, ArgsError>) {
+pub async fn run(args_res: Result<Args, ArgsError>) {
     match args_res {
         Err(err) => err.handle(),
-        Ok(args) => match run_args(args) {
+        Ok(args) => match run_args(args).await {
             Ok(_) => return,
             Err(err) => err.handle(),
         },
     }
 }
 
-fn run_args(args: Args) -> Result<(), ArgsError> {
+async fn run_args(args: Args) -> Result<(), ArgsError> {
     match args {
         One(f) => match f.as_str() {
             "help" => help::help(),
             _ => return Err(ArgsError::InvalidArgs),
         },
         Two(d, f, v) => match f.as_str() {
-            "get" => get::try_get(v.as_str(), &d),
+            "get" => match get::try_get(v.as_str(), &d).await {
+                Ok(_) => log::msg("saved!"),
+                Err(err) => println!("{} err", err),
+            },
             _ => return Err(ArgsError::InvalidArgs),
         },
     }
