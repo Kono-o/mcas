@@ -55,7 +55,7 @@ async fn run_args(args: Args) -> Result<(), ArgsError> {
         },
         Two(d, f, v) => match f.as_str() {
             "get" => match get::try_get(v.as_str(), &d).await {
-                Ok(_) => log::msg("saved!"),
+                Ok(_) => msg("saved!"),
                 Err(err) => println!("{} err", err),
             },
             _ => return Err(ArgsError::InvalidArgs),

@@ -31,6 +31,14 @@ pub async fn try_get(version: &str, dir: &PathBuf) -> Result<()> {
 
     while let Some(item) = byte_stream.next().await {
         bar.inc(1);
+        match item {
+            Ok(ref r) =>  {
+                b"404: Not Found" => println!("404"),
+                _ => println!("_"),
+            },
+            Err(_) => (),
+        }
+
         tokio::io::copy(&mut item?.as_ref(), &mut file).await?;
     }
     bar.finish_and_clear();
