@@ -6,11 +6,11 @@ edition = "2021"
 description = "a minimalist CLI to fetch and save minecraft texture packs by version."
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/Kono-o/mcasset-getter"
+repository = "https://github.com/Kono-o/mcas"
 keywords = ["cli", "download", "minecraft", "texture-pack"]
 categories = ["command-line-utilities"]
-homepage = "https://github.com/Kono-o/mcasset-getter"
-documentation = "https://docs.rs/mcasset-getter"
+homepage = "https://github.com/Kono-o/mcas"
+documentation = "https://docs.rs/mcas"
 
 [dependencies]
 anyhow = "1.0.82"

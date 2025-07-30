@@ -36,7 +36,7 @@ cargo install mcas
 ### From source
 
 ```
-git clone https://github.com/yourname/mcas
+git clone https://github.com/Kono-o/mcas
 cd mcas
 cargo install --path .
 ```
