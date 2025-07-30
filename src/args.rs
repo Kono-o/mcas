@@ -19,6 +19,7 @@ impl ArgsError {
 #[derive(Debug)]
 pub enum Func {
     Help,
+    Info,
     Get(String, Option<PathBuf>),
 }
 
@@ -57,6 +58,7 @@ fn parse() -> Result<Args, ArgsError> {
             (None, _, _) => return missing,
             (Some(f), v, o) => match (f.to_lowercase().as_str(), v, o) {
                 ("help", _, _) => Func::Help,
+                ("info", _, _) => Func::Info,
                 ("get", Some(v), None) => Func::Get(v, None),
                 ("get", Some(v), Some(o)) => Func::Get(v, Some(PathBuf::from(o))),
                 ("get", None, None) => return missing,
@@ -70,6 +72,7 @@ fn parse() -> Result<Args, ArgsError> {
 async fn run(mut args: Args) -> Result<(), ArgsError> {
     match args.func {
         Func::Help => func::help(),
+        Func::Info => func::info(),
         Func::Get(v, o) => match func::get(&v, &mut args.dir, Option::from(&o)).await {
             Err(err) => func::msg_error(&format!("{err}")),
             Ok(_) => return Ok(()),
