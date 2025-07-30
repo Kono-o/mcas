@@ -1,6 +1,6 @@
 [package]
 name = "mcas"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Kono"]
 edition = "2021"
 description = "a minimalist CLI to fetch and save minecraft texture packs by version."

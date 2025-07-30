@@ -1,23 +1,35 @@
 use crate::func;
-use anyhow::Result;
+use anyhow::{bail, Result};
 use futures::StreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
+use std::fs;
 use std::path::PathBuf;
 use std::time::Duration;
 
 const URL: &str = "https://github.com/InventivetalentDev/minecraft-assets/zipball/refs/heads/";
 
-pub async fn get(version: &str, dir: &mut PathBuf, out: Option<&PathBuf>) -> Result<()> {
-    let out = out.unwrap_or(dir);
-    let mut dir = dir.clone();
-    let mut final_out = out.clone();
-    let out_str = out.to_str().unwrap_or("");
-    if out_str.chars().nth(0).unwrap_or(' ') == '+' {
-        dir.extend(out);
-        final_out = dir;
-    }
-    get_dir(version, &final_out).await
+pub async fn get(version: &str, dir: &PathBuf, out: Option<&PathBuf>) -> Result<()> {
+    let final_out = match out {
+        Some(path) => {
+            let path_str = path.to_string_lossy();
+            if path_str == "+" {
+                bail!("invalid output path: '+' is not a valid path");
+            } else if path_str.starts_with('+') {
+                let rel = path_str.trim_start_matches('+');
+                dir.join(rel)
+            } else {
+                path.clone()
+            }
+        }
+        None => dir.clone(),
+    };
+
+    fs::create_dir_all(&final_out)?;
+    func::msg_ok(&format!("created ({})!", final_out.to_str().unwrap_or("")));
+    let canon_out = fs::canonicalize(&final_out)?;
+
+    get_dir(version, &canon_out).await
 }
 
 pub async fn get_dir(version: &str, out: &PathBuf) -> Result<()> {

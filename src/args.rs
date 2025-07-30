@@ -74,7 +74,7 @@ async fn run(mut args: Args) -> Result<(), ArgsError> {
         Func::Help => func::help(),
         Func::Info => func::info(),
         Func::Get(v, o) => match func::get(&v, &mut args.dir, Option::from(&o)).await {
-            Err(err) => func::msg_error(&format!("{err}")),
+            Err(err) => func::msg_error(&format!("{err}").to_lowercase()),
             Ok(_) => return Ok(()),
         },
     }
