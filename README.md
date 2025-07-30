@@ -1,4 +1,4 @@
-# mcas
+# MCAS - mcasset getter
 
 A minimal CLI to fetch and download vanilla Minecraft texture packs by version.
 
