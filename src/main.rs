@@ -1,7 +1,7 @@
-mod args;
 mod func;
+mod mcas;
 
 #[tokio::main]
 async fn main() {
-    args::go().await;
+    mcas::run().await;
 }

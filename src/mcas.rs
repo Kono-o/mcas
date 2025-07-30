@@ -29,10 +29,10 @@ pub struct Args {
     func: Func,
 }
 
-pub async fn go() {
+pub async fn run() {
     match parse() {
         Err(err) => err.handle(),
-        Ok(args) => match run(args).await {
+        Ok(args) => match func(args).await {
             Err(err) => err.handle(),
             Ok(_) => return,
         },
@@ -69,7 +69,7 @@ fn parse() -> Result<Args, ArgsError> {
     Ok(args)
 }
 
-async fn run(mut args: Args) -> Result<(), ArgsError> {
+async fn func(mut args: Args) -> Result<(), ArgsError> {
     match args.func {
         Func::Help => func::help(),
         Func::Info => func::info(),
