@@ -1,11 +1,19 @@
 [package]
 name = "mcas"
 version = "0.1.0"
+authors = ["Kono"]
 edition = "2021"
+description = "a minimalist CLI to fetch and save minecraft texture packs by version."
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/yourusername/fetchpack"
+keywords = ["cli", "download", "minecraft"]
+categories = ["command-line-utilities"]
+homepage = "https://github.com/yourusername/fetchpack"
+documentation = "https://docs.rs/fetchpack"
 
 [dependencies]
 anyhow = "1.0.82"
-concat-string = "1.0.1"
 indicatif = "0.17.8"
 reqwest = { version = "0.12.2", features = ["blocking", "stream"] }
 tokio = { version = "1.37.0", features = ["full"] }

@@ -1,64 +1,78 @@
-use crate::args::Args::{One, Two};
-use crate::{get, help, log};
+use crate::func;
 
-use log::*;
 use std::path::PathBuf;
 
+#[derive(Debug)]
 pub enum ArgsError {
-    InvalidDir,
     InvalidArgs,
     MissingArgs,
 }
 impl ArgsError {
     pub fn handle(&self) {
-        match self {
-            ArgsError::InvalidDir => msg("current directory needs higher permissions to access."),
-            ArgsError::MissingArgs => msg("missing arguments, use mcas help for valid arguments."),
-            ArgsError::InvalidArgs => msg("invalid arguments, use mcas help for valid arguments."),
-        }
+        func::msg_error(match self {
+            ArgsError::MissingArgs => "missing arguments, run 'mcas help' for info.",
+            ArgsError::InvalidArgs => "invalid arguments, run 'mcas help' for info.",
+        });
     }
 }
 
-pub enum Args {
-    One(String),
-    Two(PathBuf, String, String),
+#[derive(Debug)]
+pub enum Func {
+    Help,
+    Get(String, Option<PathBuf>),
 }
 
-pub fn parse() -> Result<Args, ArgsError> {
-    return match (
+#[derive(Debug)]
+pub struct Args {
+    dir: PathBuf,
+    func: Func,
+}
+
+pub async fn go() {
+    match parse() {
+        Err(err) => err.handle(),
+        Ok(args) => match run(args).await {
+            Err(err) => err.handle(),
+            Ok(_) => return,
+        },
+    }
+}
+
+fn parse() -> Result<Args, ArgsError> {
+    let missing = Err(ArgsError::MissingArgs);
+    let invalid = Err(ArgsError::InvalidArgs);
+
+    let (dir, token_0, token_1, token_2) = (
         std::env::current_dir(),
         std::env::args().nth(1),
         std::env::args().nth(2),
-    ) {
-        (Ok(_), Some(f), None) => Ok(One(f)),
-        (Ok(d), Some(f), Some(v)) => Ok(Two(d, f, v)),
-        (Ok(_), None, _) => Err(ArgsError::MissingArgs),
-        _ => Err(ArgsError::InvalidDir),
-    };
-}
-
-pub async fn run(args_res: Result<Args, ArgsError>) {
-    match args_res {
-        Err(err) => err.handle(),
-        Ok(args) => match run_args(args).await {
-            Ok(_) => return,
-            Err(err) => err.handle(),
+        std::env::args().nth(3),
+    );
+    let args = Args {
+        dir: match dir {
+            Ok(d) => d,
+            Err(_) => return invalid,
         },
-    }
-}
-
-async fn run_args(args: Args) -> Result<(), ArgsError> {
-    match args {
-        One(f) => match f.as_str() {
-            "help" => help::help(),
-            _ => return Err(ArgsError::InvalidArgs),
-        },
-        Two(d, f, v) => match f.as_str() {
-            "get" => match get::try_get(v.as_str(), &d).await {
-                Ok(_) => msg("saved!"),
-                Err(err) => println!("{} err", err),
+        func: match (token_0, token_1, token_2) {
+            (None, _, _) => return missing,
+            (Some(f), v, o) => match (f.to_lowercase().as_str(), v, o) {
+                ("help", _, _) => Func::Help,
+                ("get", Some(v), None) => Func::Get(v, None),
+                ("get", Some(v), Some(o)) => Func::Get(v, Some(PathBuf::from(o))),
+                ("get", None, None) => return missing,
+                _ => return invalid,
             },
-            _ => return Err(ArgsError::InvalidArgs),
+        },
+    };
+    Ok(args)
+}
+
+async fn run(mut args: Args) -> Result<(), ArgsError> {
+    match args.func {
+        Func::Help => func::help(),
+        Func::Get(v, o) => match func::get(&v, &mut args.dir, Option::from(&o)).await {
+            Err(err) => func::msg_error(&format!("{err}")),
+            Ok(_) => return Ok(()),
         },
     }
     Ok(())
